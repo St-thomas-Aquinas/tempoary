@@ -2,7 +2,6 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 import cv2
-from PIL import Image
 import os
 
 # ----------------------
@@ -42,7 +41,7 @@ CLASS_NAMES = ["cat", "dog", "elephant", "lion", "tiger", "zebra"]
 # Preprocess function
 # ----------------------
 def preprocess_image(img):
-    img = cv2.resize(img, (224, 224))  # adjust to your input size
+    img = cv2.resize(img, (128, 128))   # ✅ match your model input
     img = img / 255.0
     img = np.expand_dims(img.astype(np.float32), axis=0)
     return img
@@ -59,20 +58,35 @@ def predict(img):
 # ----------------------
 # Streamlit UI
 # ----------------------
-st.title("🐾 Animal Classifier (Auto TFLite)")
-st.write("Upload an image. First run will convert model to TensorFlow Lite.")
+st.title("🐾 Real-Time Animal Classifier (128x128, Auto TFLite)")
+st.write("Press the checkbox to start your camera and see predictions in real-time.")
 
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+start = st.checkbox("Start Camera")
+FRAME_WINDOW = st.image([])
 
-if uploaded_file:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+if start:
+    cap = cv2.VideoCapture(0)  # open default camera
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            st.write("⚠️ Cannot access camera")
+            break
 
-    img_array = np.array(image)
-    processed = preprocess_image(img_array)
-    preds = predict(processed)
+        # Convert frame (BGR → RGB for Streamlit)
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-    label = CLASS_NAMES[np.argmax(preds)]
-    confidence = np.max(preds)
+        # Predict
+        processed = preprocess_image(rgb)
+        preds = predict(processed)
+        label = CLASS_NAMES[np.argmax(preds)]
+        confidence = np.max(preds)
 
-    st.markdown(f"### 🐾 Prediction: **{label}** ({confidence:.2f})")
+        # Overlay label
+        cv2.putText(rgb, f"{label} ({confidence:.2f})",
+                    (10, 40), cv2.FONT_HERSHEY_SIMPLEX,
+                    1, (255, 0, 0), 2, cv2.LINE_AA)
+
+        # Show frame
+        FRAME_WINDOW.image(rgb)
+
+    cap.release()

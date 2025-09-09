@@ -3,5 +3,6 @@ streamlit-webrtc
 tensorflow
 opencv-python-headless
 numpy
-av
+av==10.0.0
+
 

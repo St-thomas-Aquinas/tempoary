@@ -3,6 +3,7 @@ import tensorflow as tf
 import numpy as np
 import cv2
 import os
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
 
 # ----------------------
 # Convert Keras model -> TFLite if not already
@@ -29,8 +30,6 @@ def load_tflite_model():
     return interpreter
 
 interpreter = load_tflite_model()
-
-# Input/output details
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
@@ -38,16 +37,16 @@ output_details = interpreter.get_output_details()
 CLASS_NAMES = ["cat", "dog", "elephant", "lion", "tiger", "zebra"]
 
 # ----------------------
-# Preprocess function
+# Preprocessing
 # ----------------------
 def preprocess_image(img):
-    img = cv2.resize(img, (128, 128))   # ✅ match your model input
+    img = cv2.resize(img, (128, 128))   # ✅ your input size
     img = img / 255.0
     img = np.expand_dims(img.astype(np.float32), axis=0)
     return img
 
 # ----------------------
-# Predict function
+# Predict
 # ----------------------
 def predict(img):
     interpreter.set_tensor(input_details[0]['index'], img)
@@ -56,24 +55,12 @@ def predict(img):
     return preds
 
 # ----------------------
-# Streamlit UI
+# Video Transformer
 # ----------------------
-st.title("🐾 Real-Time Animal Classifier (128x128, Auto TFLite)")
-st.write("Press the checkbox to start your camera and see predictions in real-time.")
-
-start = st.checkbox("Start Camera")
-FRAME_WINDOW = st.image([])
-
-if start:
-    cap = cv2.VideoCapture(0)  # open default camera
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            st.write("⚠️ Cannot access camera")
-            break
-
-        # Convert frame (BGR → RGB for Streamlit)
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+class VideoTransformer(VideoTransformerBase):
+    def transform(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+        rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         # Predict
         processed = preprocess_image(rgb)
@@ -82,11 +69,16 @@ if start:
         confidence = np.max(preds)
 
         # Overlay label
-        cv2.putText(rgb, f"{label} ({confidence:.2f})",
+        cv2.putText(img, f"{label} ({confidence:.2f})",
                     (10, 40), cv2.FONT_HERSHEY_SIMPLEX,
-                    1, (255, 0, 0), 2, cv2.LINE_AA)
+                    1, (0, 255, 0), 2, cv2.LINE_AA)
 
-        # Show frame
-        FRAME_WINDOW.image(rgb)
+        return img
 
-    cap.release()
+# ----------------------
+# Streamlit UI
+# ----------------------
+st.title("🐾 Real-Time Animal Classifier (TFLite + WebRTC, 128x128)")
+st.write("Allow camera access to see predictions in real-time.")
+
+webrtc_streamer(key="animal-demo", video_transformer_factory=VideoTransformer)

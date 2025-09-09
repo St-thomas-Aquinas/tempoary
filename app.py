@@ -1,31 +1,15 @@
 import streamlit as st
-import tensorflow as tf
 import numpy as np
 import cv2
-import os
+import tflite_runtime.interpreter as tflite
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
 
 # ----------------------
-# Convert Keras model -> TFLite if not already
+# Load TFLite model
 # ----------------------
 @st.cache_resource
 def load_tflite_model():
-    if not os.path.exists("animal_model.tflite"):
-        st.write("Converting Keras model to TFLite...")
-
-        # Load keras model
-        model = tf.keras.models.load_model("best_model.h5")
-
-        # Convert
-        converter = tf.lite.TFLiteConverter.from_keras_model(model)
-        tflite_model = converter.convert()
-
-        # Save
-        with open("animal_model.tflite", "wb") as f:
-            f.write(tflite_model)
-
-    # Load TFLite model
-    interpreter = tf.lite.Interpreter(model_path="animal_model.tflite")
+    interpreter = tflite.Interpreter(model_path="animal_model.tflite")
     interpreter.allocate_tensors()
     return interpreter
 

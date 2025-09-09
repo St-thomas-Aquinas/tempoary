@@ -24,7 +24,7 @@ CLASS_NAMES = ["cat", "dog", "elephant", "lion", "tiger", "zebra"]
 # Preprocessing
 # ----------------------
 def preprocess_image(img):
-    img = cv2.resize(img, (128, 128))   # ✅ your input size
+    img = cv2.resize(img, (128, 128))   # match your model input
     img = img / 255.0
     img = np.expand_dims(img.astype(np.float32), axis=0)
     return img
@@ -55,14 +55,4 @@ class VideoTransformer(VideoTransformerBase):
         # Overlay label
         cv2.putText(img, f"{label} ({confidence:.2f})",
                     (10, 40), cv2.FONT_HERSHEY_SIMPLEX,
-                    1, (0, 255, 0), 2, cv2.LINE_AA)
-
-        return img
-
-# ----------------------
-# Streamlit UI
-# ----------------------
-st.title("🐾 Real-Time Animal Classifier (TFLite + WebRTC, 128x128)")
-st.write("Allow camera access to see predictions in real-time.")
-
-webrtc_streamer(key="animal-demo", video_transformer_factory=VideoTransformer)
+                    1, (0, 255, 0), 2, cv2.L

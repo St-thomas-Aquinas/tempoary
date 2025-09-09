@@ -9,7 +9,7 @@ from PIL import Image
 # -------------------------------
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model("animal_model.h5")  # Change to your model path
+    model = tf.keras.models.load_model("best_model.h5")  # Change to your model path
     return model
 
 model = load_model()

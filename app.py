@@ -1,38 +1,45 @@
 import streamlit as st
-from PIL import Image
+import tensorflow as tf
 import numpy as np
 import cv2
-import tensorflow as tf
+from PIL import Image
 
-st.set_page_config(page_title="Camera Input Animal Detector")
-
-# --- load model ---
+# ----------------------
+# Load model
+# ----------------------
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model("best_model.h5")
+    model = tf.keras.models.load_model("animal_model.h5")
+    return model
 
 model = load_model()
 
-CLASS_NAMES = ["cat", "dog", "lion", "elephant"]  # change to your classes
-INPUT_SIZE = (224, 224)  # change to your model input size
+# Edit this to match your dataset
+CLASS_NAMES = ["cat", "dog", "elephant", "lion", "tiger", "zebra"]
 
-st.title("🐾 Camera Input — Animal Detection")
-st.write("Take a photo with your camera. Predictions will appear below.")
+# ----------------------
+# Preprocessing
+# ----------------------
+def preprocess_image(img):
+    img = cv2.resize(img, (224, 224))   # adjust to model input
+    img = img / 255.0
+    img = np.expand_dims(img, axis=0)
+    return img
 
-img_file = st.camera_input("Take a picture")
+# ----------------------
+# Streamlit App
+# ----------------------
+st.title("🐾 Animal Classifier (Streamlit Cloud)")
+st.write("Upload an image and the model will identify the animal.")
 
-if img_file is not None:
-    img = Image.open(img_file).convert("RGB")
-    st.image(img, caption="Captured photo", use_column_width=True)
+uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
 
-    # preprocess
-    img_np = np.array(img)
-    resized = cv2.resize(img_np, INPUT_SIZE)
-    inp = resized.astype("float32") / 255.0
-    inp = np.expand_dims(inp, axis=0)
+if uploaded_file is not None:
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Image", use_column_width=True)
 
-    preds = model.predict(inp)[0]
-    idx = int(preds.argmax())
-    conf = float(preds.max())
+    # Convert to array
+    img_array = np.array(image)
 
-    st.markdown(f"**Prediction:** {CLASS_NAMES[idx]}  \n**Confidence:** {conf:.2f}")
+    # Preprocess + Predict
+    processed = preprocess_image(img_

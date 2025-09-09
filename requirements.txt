@@ -1,6 +1,6 @@
 streamlit
 opencv-python-headless
+tensorflow-cpu==2.12.0
 pillow
 numpy
 streamlit-webrtc
-tflite-runtime @ https://github.com/google-coral/pycoral/releases/download/release-frogfish/tflite_runtime-2.14.0-cp310-cp310-manylinux2014_x86_64.whl

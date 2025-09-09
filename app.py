@@ -9,7 +9,7 @@ st.set_page_config(page_title="Camera Input Animal Detector")
 # --- load model ---
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model("animal_model.h5")
+    return tf.keras.models.load_model("best_model.h5")
 
 model = load_model()
 

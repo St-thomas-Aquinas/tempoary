@@ -1,6 +1,6 @@
 streamlit
 opencv-python-headless
-tflite-runtime
+tflite-runtime==2.14.0
 pillow
 numpy
 streamlit-webrtc

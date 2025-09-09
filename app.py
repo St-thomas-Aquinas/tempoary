@@ -1,31 +1,38 @@
 import streamlit as st
-import cv2
+from PIL import Image
 import numpy as np
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+import cv2
+import tensorflow as tf
 
-# Dummy class labels
-CLASS_NAMES = ["cat", "dog", "lion", "elephant"]
+st.set_page_config(page_title="Camera Input Animal Detector")
 
-class VideoTransformer(VideoTransformerBase):
-    def transform(self, frame):
-        img = frame.to_ndarray(format="bgr24")
+# --- load model ---
+@st.cache_resource
+def load_model():
+    return tf.keras.models.load_model("animal_model.h5")
 
-        # Fake prediction (random label)
-        idx = np.random.randint(0, len(CLASS_NAMES))
-        label = CLASS_NAMES[idx]
+model = load_model()
 
-        # Draw prediction
-        cv2.putText(img, label, (10, 40),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1,
-                    (0, 255, 0), 2, cv2.LINE_AA)
+CLASS_NAMES = ["cat", "dog", "lion", "elephant"]  # change to your classes
+INPUT_SIZE = (224, 224)  # change to your model input size
 
-        return img
+st.title("🐾 Camera Input — Animal Detection")
+st.write("Take a photo with your camera. Predictions will appear below.")
 
-st.title("🐾 Webcam Test App")
-st.write("Testing Streamlit + WebRTC + OpenCV")
+img_file = st.camera_input("Take a picture")
 
-webrtc_streamer(
-    key="example",
-    video_transformer_factory=VideoTransformer,
-    media_stream_constraints={"video": True, "audio": False},
-)
+if img_file is not None:
+    img = Image.open(img_file).convert("RGB")
+    st.image(img, caption="Captured photo", use_column_width=True)
+
+    # preprocess
+    img_np = np.array(img)
+    resized = cv2.resize(img_np, INPUT_SIZE)
+    inp = resized.astype("float32") / 255.0
+    inp = np.expand_dims(inp, axis=0)
+
+    preds = model.predict(inp)[0]
+    idx = int(preds.argmax())
+    conf = float(preds.max())
+
+    st.markdown(f"**Prediction:** {CLASS_NAMES[idx]}  \n**Confidence:** {conf:.2f}")

@@ -10,7 +10,7 @@ from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
 # -------------------------------
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model("animal_model.h5")  # path to your model
+    model = tf.keras.models.load_model("best_model.h5")  # path to your model
     return model
 
 model = load_model()
